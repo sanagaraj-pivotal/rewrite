@@ -556,8 +556,34 @@ public class ReloadableJava8JavadocVisitor extends DocTreeScanner<Tree, List<Jav
                     for (int i = 0; i < paramTypes.size(); i++) {
                         JCTree param = paramTypes.get(i);
                         Expression paramExpr = (Expression) javaVisitor.scan(param, Space.build(whitespaceBeforeAsString(), emptyList()));
+                        if (paramExpr instanceof J.Identifier && ((J.Identifier) paramExpr).getPrefix().getWhitespace().contains("\n")) {
+                            Optional<Integer> maybeLineBreak = lineBreaks.keySet().stream().filter(k -> k <= cursor).findFirst();
+                            if (maybeLineBreak.isPresent()) {
+                                J.Identifier identifier = (J.Identifier) paramExpr;
+                                String prefix = identifier.getPrefix().getWhitespace()
+                                        .replace("\n", "")
+                                        .replace("\r", "");
+
+                                Javadoc.LineBreak lineBreak = lineBreaks.get(maybeLineBreak.get());
+                                paramExpr = identifier.withPrefix(identifier.getPrefix().withWhitespace(lineBreak.getMargin() + prefix));
+                                lineBreaks.remove(maybeLineBreak.get());
+                            }
+                        }
+
                         Space rightFmt = Space.format(i == paramTypes.size() - 1 ?
                                 sourceBeforeAsString(")") : sourceBeforeAsString(","));
+                        if (rightFmt.getWhitespace().contains("\n")) {
+                            Optional<Integer> maybeLineBreak = lineBreaks.keySet().stream().filter(k -> k <= cursor).findFirst();
+                            if (maybeLineBreak.isPresent()) {
+                                String prefix = rightFmt.getWhitespace()
+                                        .replace("\n", "")
+                                        .replace("\r", "");
+
+                                Javadoc.LineBreak lineBreak = lineBreaks.get(maybeLineBreak.get());
+                                rightFmt = rightFmt.withWhitespace(lineBreak.getMargin() + prefix);
+                                lineBreaks.remove(maybeLineBreak.get());
+                            }
+                        }
                         parameters.add(new JRightPadded<>(paramExpr, rightFmt, Markers.EMPTY));
                     }
                     paramContainer = JContainer.build(

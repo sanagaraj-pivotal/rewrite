@@ -1259,6 +1259,30 @@ interface JavadocTest : JavaTreeTest {
         """.trimIndent()
     )
 
+    @Issue("https://github.com/openrewrite/rewrite/issues/1078")
+    @Test
+    fun seeWithMultilineMethodInvocation(jp: JavaParser) = assertParsePrintAndProcess(
+        jp,
+        CompilationUnit,
+        """
+            import java.lang.Math;
+            
+            interface Test {
+                /**
+                 * @see Math#pow(
+                 * 
+                 * double
+                 * 
+                 * ,
+                 * double
+                 * 
+                 * )
+                 */
+                boolean test();
+            }
+        """.trimIndent()
+    )
+
     // CRLF
     @Issue("https://github.com/openrewrite/rewrite/issues/980")
     @Test

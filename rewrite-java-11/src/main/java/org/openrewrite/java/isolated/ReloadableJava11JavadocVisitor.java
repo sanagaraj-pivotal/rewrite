@@ -36,6 +36,7 @@ import org.openrewrite.java.tree.*;
 import org.openrewrite.marker.Markers;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
@@ -596,8 +597,40 @@ public class ReloadableJava11JavadocVisitor extends DocTreeScanner<Tree, List<Ja
                     for (int i = 0; i < paramTypes.size(); i++) {
                         JCTree param = paramTypes.get(i);
                         Expression paramExpr = (Expression) javaVisitor.scan(param, Space.build(whitespaceBeforeAsString(), emptyList()));
+                        if (paramExpr instanceof J.Identifier && ((J.Identifier) paramExpr).getPrefix().getWhitespace().contains("\n")) {
+                            List<Integer> maybeLineBreaks = lineBreaks.keySet().stream().filter(k -> k <= cursor).collect(Collectors.toList());
+                            if (!maybeLineBreaks.isEmpty()) {
+                                J.Identifier identifier = (J.Identifier) paramExpr;
+                                String[] prefixParts = identifier.getPrefix().getWhitespace().split("\n");
+
+                                StringBuilder lineBreakMargin = new StringBuilder();
+                                for (int j = 1; j < prefixParts.length; j++) {
+                                    String s = prefixParts[j];
+                                    Javadoc.LineBreak lineBreak = lineBreaks.get(maybeLineBreaks.get(j - 1));
+                                    lineBreakMargin.append(lineBreak.getMargin()).append(s);
+                                    lineBreaks.remove(maybeLineBreaks.get(j - 1));
+                                }
+                                paramExpr = identifier.withPrefix(identifier.getPrefix().withWhitespace(lineBreakMargin.toString()));
+                            }
+                        }
+
                         Space rightFmt = Space.format(i == paramTypes.size() - 1 ?
                                 sourceBeforeAsString(")") : sourceBeforeAsString(","));
+                        if (rightFmt.getWhitespace().contains("\n")) {
+                            List<Integer> maybeLineBreaks = lineBreaks.keySet().stream().filter(k -> k <= cursor).collect(Collectors.toList());
+                            if (!maybeLineBreaks.isEmpty()) {
+                                String[] prefixParts = rightFmt.getWhitespace().split("\n");
+
+                                StringBuilder lineBreakMargin = new StringBuilder();
+                                for (int j = 1; j < prefixParts.length; j++) {
+                                    String s = prefixParts[j];
+                                    Javadoc.LineBreak lineBreak = lineBreaks.get(maybeLineBreaks.get(j - 1));
+                                    lineBreakMargin.append(lineBreak.getMargin()).append(s);
+                                    lineBreaks.remove(maybeLineBreaks.get(j - 1));
+                                }
+                                rightFmt = rightFmt.withWhitespace(lineBreakMargin.toString());
+                            }
+                        }
                         parameters.add(new JRightPadded<>(paramExpr, rightFmt, Markers.EMPTY));
                     }
                     paramContainer = JContainer.build(
