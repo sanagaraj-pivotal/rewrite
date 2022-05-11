@@ -328,8 +328,7 @@ public interface Javadoc extends Tree {
         boolean plain;
         List<Javadoc> spaceBeforeTree;
 
-        @Nullable
-        J tree;
+        Reference tree;
 
         List<Javadoc> label;
 
@@ -421,8 +420,7 @@ public interface Javadoc extends Tree {
         Markers markers;
         List<Javadoc> spaceBeforeTree;
 
-        @Nullable
-        J tree;
+        Reference tree;
 
         List<Javadoc> reference;
 
@@ -640,6 +638,25 @@ public interface Javadoc extends Tree {
         @Override
         public <P> Javadoc acceptJavadoc(JavadocVisitor<P> v, P p) {
             return v.visitVersion(this, p);
+        }
+    }
+
+    @Value
+    @EqualsAndHashCode(callSuper = false, onlyExplicitlyIncluded = true)
+    @With
+    class Reference implements Javadoc {
+        @EqualsAndHashCode.Include
+        UUID id;
+
+        @Nullable
+        J jReference;
+
+        @Nullable
+        List<Javadoc> lineBreaks;
+
+        @Override
+        public <P> Javadoc acceptJavadoc(JavadocVisitor<P> v, P p) {
+            return v.visitReference(this, p);
         }
     }
 }

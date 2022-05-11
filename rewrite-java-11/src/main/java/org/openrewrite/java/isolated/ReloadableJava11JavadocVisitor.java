@@ -462,7 +462,13 @@ public class ReloadableJava11JavadocVisitor extends DocTreeScanner<Tree, List<Ja
         body.addAll(sourceBefore(node.getKind() == DocTree.Kind.LINK ? "{@link" : "{@linkplain"));
 
         List<Javadoc> spaceBeforeRef = whitespaceBefore();
+        Javadoc.Reference reference = null;
         J ref = visitReference(node.getReference(), body);
+        //noinspection ConstantConditions
+        if (ref != null) {
+            reference = new Javadoc.Reference(randomId(), ref, multilineJavaReferenceLineBreaks());
+        }
+
         List<Javadoc> label = convertMultiline(node.getLabel());
 
         return new Javadoc.Link(
@@ -470,7 +476,7 @@ public class ReloadableJava11JavadocVisitor extends DocTreeScanner<Tree, List<Ja
                 Markers.EMPTY,
                 node.getKind() != DocTree.Kind.LINK,
                 spaceBeforeRef,
-                ref,
+                reference,
                 label,
                 endBrace()
         );
@@ -529,6 +535,7 @@ public class ReloadableJava11JavadocVisitor extends DocTreeScanner<Tree, List<Ja
     @Override
     public Tree visitProvides(ProvidesTree node, List<Javadoc> body) {
         body.addAll(sourceBefore("@provides"));
+        // TODO:
         return new Javadoc.Provides(randomId(), Markers.EMPTY,
                 whitespaceBefore(),
                 visitReference(node.getServiceType(), body),
@@ -597,40 +604,8 @@ public class ReloadableJava11JavadocVisitor extends DocTreeScanner<Tree, List<Ja
                     for (int i = 0; i < paramTypes.size(); i++) {
                         JCTree param = paramTypes.get(i);
                         Expression paramExpr = (Expression) javaVisitor.scan(param, Space.build(whitespaceBeforeAsString(), emptyList()));
-                        if (paramExpr instanceof J.Identifier && ((J.Identifier) paramExpr).getPrefix().getWhitespace().contains("\n")) {
-                            List<Integer> maybeLineBreaks = lineBreaks.keySet().stream().filter(k -> k <= cursor).collect(Collectors.toList());
-                            if (!maybeLineBreaks.isEmpty()) {
-                                J.Identifier identifier = (J.Identifier) paramExpr;
-                                String[] prefixParts = identifier.getPrefix().getWhitespace().split("\n");
-
-                                StringBuilder lineBreakMargin = new StringBuilder();
-                                for (int j = 1; j < prefixParts.length; j++) {
-                                    String s = prefixParts[j];
-                                    Javadoc.LineBreak lineBreak = lineBreaks.get(maybeLineBreaks.get(j - 1));
-                                    lineBreakMargin.append(lineBreak.getMargin()).append(s);
-                                    lineBreaks.remove(maybeLineBreaks.get(j - 1));
-                                }
-                                paramExpr = identifier.withPrefix(identifier.getPrefix().withWhitespace(lineBreakMargin.toString()));
-                            }
-                        }
-
                         Space rightFmt = Space.format(i == paramTypes.size() - 1 ?
                                 sourceBeforeAsString(")") : sourceBeforeAsString(","));
-                        if (rightFmt.getWhitespace().contains("\n")) {
-                            List<Integer> maybeLineBreaks = lineBreaks.keySet().stream().filter(k -> k <= cursor).collect(Collectors.toList());
-                            if (!maybeLineBreaks.isEmpty()) {
-                                String[] prefixParts = rightFmt.getWhitespace().split("\n");
-
-                                StringBuilder lineBreakMargin = new StringBuilder();
-                                for (int j = 1; j < prefixParts.length; j++) {
-                                    String s = prefixParts[j];
-                                    Javadoc.LineBreak lineBreak = lineBreaks.get(maybeLineBreaks.get(j - 1));
-                                    lineBreakMargin.append(lineBreak.getMargin()).append(s);
-                                    lineBreaks.remove(maybeLineBreaks.get(j - 1));
-                                }
-                                rightFmt = rightFmt.withWhitespace(lineBreakMargin.toString());
-                            }
-                        }
                         parameters.add(new JRightPadded<>(paramExpr, rightFmt, Markers.EMPTY));
                     }
                     paramContainer = JContainer.build(
@@ -748,17 +723,24 @@ public class ReloadableJava11JavadocVisitor extends DocTreeScanner<Tree, List<Ja
     @Override
     public Tree visitSee(SeeTree node, List<Javadoc> body) {
         body.addAll(sourceBefore("@see"));
-        J ref = null;
+
+        Javadoc.Reference reference = null;
+
+        J ref;
         List<Javadoc> spaceBeforeTree = whitespaceBefore();
         List<Javadoc> docs;
         if (node.getReference().get(0) instanceof DCTree.DCReference) {
             ref = visitReference((ReferenceTree) node.getReference().get(0), body);
+            //noinspection ConstantConditions
+            if (ref != null) {
+                reference = new Javadoc.Reference(randomId(), ref, multilineJavaReferenceLineBreaks());
+            }
             docs = convertMultiline(node.getReference().subList(1, node.getReference().size()));
         } else {
             docs = convertMultiline(node.getReference());
         }
 
-        return new Javadoc.See(randomId(), Markers.EMPTY, spaceBeforeTree, ref, docs);
+        return new Javadoc.See(randomId(), Markers.EMPTY, spaceBeforeTree, reference, docs);
     }
 
     @Override
@@ -776,6 +758,8 @@ public class ReloadableJava11JavadocVisitor extends DocTreeScanner<Tree, List<Ja
     @Override
     public Tree visitSerialField(SerialFieldTree node, List<Javadoc> body) {
         body.addAll(sourceBefore("@serialField"));
+
+        // TODO
         return new Javadoc.SerialField(randomId(), Markers.EMPTY,
                 visitIdentifier(node.getName(), whitespaceBefore()),
                 visitReference(node.getType(), whitespaceBefore()),
@@ -880,6 +864,7 @@ public class ReloadableJava11JavadocVisitor extends DocTreeScanner<Tree, List<Ja
         boolean throwsKeyword = source.startsWith("@throws", cursor);
         sourceBefore(throwsKeyword ? "@throws" : "@exception");
         List<Javadoc> spaceBeforeExceptionName = whitespaceBefore();
+        // TODO
         return new Javadoc.Throws(
                 randomId(),
                 Markers.EMPTY,
@@ -916,6 +901,7 @@ public class ReloadableJava11JavadocVisitor extends DocTreeScanner<Tree, List<Ja
     @Override
     public Tree visitUses(UsesTree node, List<Javadoc> body) {
         body.addAll(sourceBefore("@uses"));
+        // TODO
         return new Javadoc.Uses(randomId(), Markers.EMPTY,
                 whitespaceBefore(),
                 visitReference(node.getServiceType(), body),
@@ -926,6 +912,7 @@ public class ReloadableJava11JavadocVisitor extends DocTreeScanner<Tree, List<Ja
     @Override
     public Tree visitValue(ValueTree node, List<Javadoc> body) {
         body.addAll(sourceBefore("{@value"));
+        // TODO
         return new Javadoc.InlinedValue(
                 randomId(),
                 Markers.EMPTY,
@@ -1059,6 +1046,21 @@ public class ReloadableJava11JavadocVisitor extends DocTreeScanner<Tree, List<Ja
             }
         }
         return js;
+    }
+
+    private List<Javadoc> multilineJavaReferenceLineBreaks() {
+        List<Integer> linebreakIndexes = lineBreaks.keySet().stream()
+                .filter(o -> o <= cursor)
+                .collect(Collectors.toList());
+
+        List<Javadoc> referenceLineBreaks = linebreakIndexes.stream()
+                .map(lineBreaks::get)
+                .collect(Collectors.toList());
+
+        for (Integer key : linebreakIndexes) {
+            lineBreaks.remove(key);
+        }
+        return referenceLineBreaks;
     }
 
     class JavaVisitor extends TreeScanner<J, Space> {

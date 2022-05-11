@@ -16,6 +16,7 @@
 package org.openrewrite.java;
 
 import org.openrewrite.PrintOutputCapture;
+import org.openrewrite.Tree;
 import org.openrewrite.internal.lang.Nullable;
 import org.openrewrite.java.tree.*;
 
@@ -146,7 +147,7 @@ public class JavadocPrinter<P> extends JavadocVisitor<PrintOutputCapture<P>> {
         visitMarkers(link.getMarkers(), p);
         p.append(link.isPlain() ? "{@linkplain" : "{@link");
         visit(link.getSpaceBeforeTree(), p);
-        javaVisitor.visit(link.getTree(), p);
+        visit(link.getTree(), p);
         visit(link.getLabel(), p);
         visit(link.getEndBrace(), p);
         return link;
@@ -194,7 +195,7 @@ public class JavadocPrinter<P> extends JavadocVisitor<PrintOutputCapture<P>> {
         visitMarkers(see.getMarkers(), p);
         p.append("@see");
         visit(see.getSpaceBeforeTree(), p);
-        javaVisitor.visit(see.getTree(), p);
+        visit(see.getTree(), p);
         visit(see.getReference(), p);
         return see;
     }
@@ -313,6 +314,13 @@ public class JavadocPrinter<P> extends JavadocVisitor<PrintOutputCapture<P>> {
                 visit(node, p);
             }
         }
+    }
+
+    @Override
+    public Javadoc visitReference(Javadoc.Reference reference, PrintOutputCapture<P> p) {
+        javaVisitor.visit(reference.getJReference(), p);
+        visit(reference.getLineBreaks(), p);
+        return reference;
     }
 
     static class JavadocJavaPrinter<P> extends JavaVisitor<PrintOutputCapture<P>> {
