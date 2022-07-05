@@ -27,6 +27,7 @@ import org.openrewrite.yaml.tree.Yaml;
 
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static java.util.Spliterators.spliteratorUnknownSize;
 import static java.util.stream.StreamSupport.stream;
@@ -165,8 +166,34 @@ public class XChangePropertyKey extends Recipe {
                         return e;
                     }));
                 } else {
+
+                    String[] split = subproperty.split("\\.");
+                    Yaml.Mapping.Entry lastEntryInPath = new Yaml.Mapping.Entry(randomId(),
+                            newEntryPrefix,
+                            Markers.EMPTY,
+                            new Yaml.Scalar(randomId(), "", Markers.EMPTY,
+                                    Yaml.Scalar.Style.PLAIN, null, split[split.length - 1]),
+                            scope.getBeforeMappingValueIndicator(),
+                            newEntry.getValue());
+                    for (int i = split.length - 2; i >= 0; i--) {
+                        Yaml.Mapping.Mapping childMapping = new Yaml.Mapping.Mapping(
+                                randomId(),
+                                Markers.EMPTY,
+                                null,
+                                Arrays.asList(lastEntryInPath),
+                                null);
+
+                        Yaml.Mapping.Entry parentEntry = new Yaml.Mapping.Entry(randomId(),
+                                "",
+                                Markers.EMPTY,
+                                new Yaml.Scalar(randomId(), "", Markers.EMPTY,
+                                        Yaml.Scalar.Style.PLAIN, null, split[i]),
+                                scope.getBeforeMappingValueIndicator(),
+                                childMapping);
+                        lastEntryInPath = parentEntry;
+                    }
                     m = (Yaml.Mapping) new DeletePropertyVisitor<>(entryToReplace).visitNonNull(m, p);
-                    m = maybeAutoFormat(m, m.withEntries(ListUtils.concat(m.getEntries(), newEntry)), p, getCursor().getParentOrThrow());
+                    m = maybeAutoFormat(m, m.withEntries(ListUtils.concat(m.getEntries(), lastEntryInPath)), p, getCursor().getParentOrThrow());
                 }
             }
 

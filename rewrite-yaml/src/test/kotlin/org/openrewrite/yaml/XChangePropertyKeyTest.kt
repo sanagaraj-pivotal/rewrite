@@ -27,9 +27,53 @@ class XChangePropertyKeyTest : YamlRecipeTest {
                   child: true
         """,
         after = """
+
         x:
           y:
             child: true
         """
+    )
+
+    @Issue("https://github.com/openrewrite/rewrite/issues/1873")
+    @Test
+    fun `longer new key with indented config`() = assertChanged(
+        recipe = XChangePropertyKey("x.y", "a.b.c.d.e",  null, null),
+        before =
+        """
+        x:
+          y:
+            child: true
+        """,
+        after = """
+
+        a:
+          b:
+            c:
+              d:
+                e:
+                  child: true
+        """
+    )
+
+    @Test
+    fun singleEntry() = assertChanged(
+        before = "management.metrics.binders.files.enabled: true",
+        after = "management.metrics.enable.process.files: true"
+    )
+
+    @Test
+    fun wildcardHierarchyEntry() = assertChanged(
+        before = """
+            management:
+              metrics:
+                binders:
+                  files:
+                    enabled: true""",
+        after = """
+        management:
+          metrics:
+            enable:
+              process:
+               files: true"""
     )
 }
