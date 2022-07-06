@@ -74,6 +74,34 @@ class XChangePropertyKeyTest : YamlRecipeTest {
           metrics:
             enable:
               process:
-               files: true"""
+                files: true"""
     )
+
+    @Test
+    fun nestedEntry() = assertChanged(
+        recipe = ChangePropertyKey(
+            "management.metrics.binders.files.enabled",
+            "management.metrics.enable.process.files",
+            null,
+            null
+        ),
+        before = """
+            unrelated.property: true
+            management.metrics:
+                binders:
+                    jvm.enabled: true
+                    files.enabled: true
+        """,
+        after = """
+            unrelated.property: true
+            management.metrics:
+                binders:
+                    jvm.enabled: true
+                enable:
+                  process:
+                    files: true
+        """
+    )
+
+
 }

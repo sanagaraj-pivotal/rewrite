@@ -184,7 +184,7 @@ public class XChangePropertyKey extends Recipe {
                                 null);
 
                         Yaml.Mapping.Entry parentEntry = new Yaml.Mapping.Entry(randomId(),
-                                "",
+                                newEntryPrefix,
                                 Markers.EMPTY,
                                 new Yaml.Scalar(randomId(), "", Markers.EMPTY,
                                         Yaml.Scalar.Style.PLAIN, null, split[i]),
@@ -193,10 +193,13 @@ public class XChangePropertyKey extends Recipe {
                         lastEntryInPath = parentEntry;
                     }
                     m = (Yaml.Mapping) new DeletePropertyVisitor<>(entryToReplace).visitNonNull(m, p);
-                    m = maybeAutoFormat(m, m.withEntries(ListUtils.concat(m.getEntries(), lastEntryInPath)), p, getCursor().getParentOrThrow());
+                    if (getCursor().getParentOrThrow().getValue() instanceof Yaml.Document) {
+                        m = maybeAutoFormat(m, m.withEntries(ListUtils.concat(m.getEntries(), lastEntryInPath)), p, getCursor().getParentOrThrow());
+                    } else {
+                        m = maybeAutoFormat(m, m.withEntries(ListUtils.concat(m.getEntries(), lastEntryInPath)), p, getCursor());
+                    }
                 }
             }
-
             return m;
         }
     }
