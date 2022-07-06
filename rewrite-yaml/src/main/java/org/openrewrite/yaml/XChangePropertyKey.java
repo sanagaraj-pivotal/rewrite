@@ -168,13 +168,15 @@ public class XChangePropertyKey extends Recipe {
                 } else {
 
                     String[] split = subproperty.split("\\.");
+                    Yaml.Block value = entryToReplace.getValue().copyPaste();
+
                     Yaml.Mapping.Entry lastEntryInPath = new Yaml.Mapping.Entry(randomId(),
                             newEntryPrefix,
                             Markers.EMPTY,
                             new Yaml.Scalar(randomId(), "", Markers.EMPTY,
                                     Yaml.Scalar.Style.PLAIN, null, split[split.length - 1]),
                             scope.getBeforeMappingValueIndicator(),
-                            newEntry.getValue());
+                            value);
                     for (int i = split.length - 2; i >= 0; i--) {
                         Yaml.Mapping.Mapping childMapping = new Yaml.Mapping.Mapping(
                                 randomId(),
@@ -192,8 +194,15 @@ public class XChangePropertyKey extends Recipe {
                                 childMapping);
                         lastEntryInPath = parentEntry;
                     }
+
                     m = (Yaml.Mapping) new DeletePropertyVisitor<>(entryToReplace).visitNonNull(m, p);
-                    m = maybeAutoFormat(m, m.withEntries(ListUtils.concat(m.getEntries(), lastEntryInPath)), p, getCursor().getParentOrThrow());
+                    ((Yaml.Mapping) lastEntryInPath.getValue()).getEntries().set(0, ((Yaml.Mapping) lastEntryInPath.getValue()).getEntries().get(0).withPrefix("\n        "));
+                    m = maybeAutoFormat(m,
+                            m.withEntries(
+                                    ListUtils.concat(m.getEntries(), lastEntryInPath)),
+                            p,
+                            getCursor().getParentOrThrow())
+                    ;
                 }
             }
 

@@ -61,6 +61,8 @@ class XChangePropertyKeyTest : YamlRecipeTest {
         after = "management.metrics.enable.process.files: true"
     )
 
+//    "management.metrics.binders.*.enabled",
+//    "management.metrics.enable.process.files",
     @Test
     fun wildcardHierarchyEntry() = assertChanged(
         before = """
@@ -76,4 +78,48 @@ class XChangePropertyKeyTest : YamlRecipeTest {
               process:
                files: true"""
     )
+
+    @Test
+    fun `screwdupTest`() = assertChanged(
+        recipe = XChangePropertyKey("a.b.c.d.e", "a.b.c.f", null, null),
+        before =
+        """
+        a:
+          b:
+            c:
+              d:
+                e:
+                  child: true
+        """.trimIndent(),
+        after = """
+        a:
+          b:
+            c:
+              f:
+                child: true
+        """.trimIndent()
+    )
+
+    @Test
+    fun `bestCase`() = assertChanged(
+        recipe = XChangePropertyKey("a.b.c.d.e", "a.b.c.d.f", null, null),
+        before =
+        """
+        a:
+          b:
+            c:
+              d:
+                e:
+                  child: true
+        """,
+        after = """
+        a:
+          b:
+            c:
+              d:
+                f:
+                  child: true
+        """
+    )
+
 }
