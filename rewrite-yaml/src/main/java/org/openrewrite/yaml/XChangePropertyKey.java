@@ -167,6 +167,7 @@ public class XChangePropertyKey extends Recipe {
                     }));
                 } else {
 
+
                     String[] split = subproperty.split("\\.");
                     Yaml.Mapping.Entry lastEntryInPath = new Yaml.Mapping.Entry(randomId(),
                             newEntryPrefix,

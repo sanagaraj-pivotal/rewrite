@@ -170,7 +170,7 @@ class XChangePropertyKeyTest : YamlRecipeTest {
     )
     @Issue("https://github.com/openrewrite/rewrite/issues/1168")
     fun relaxedBinding(propertyKey: String) = assertChanged(
-        recipe = ChangePropertyKey(propertyKey, "acme.my-project.person.changed-first-name-key", true, null),
+        recipe = XChangePropertyKey(propertyKey, "acme.my-project.person.changed-first-name-key", true, null),
         before = """
             unrelated.root: true
             acme.my-project:
@@ -192,7 +192,7 @@ class XChangePropertyKeyTest : YamlRecipeTest {
     @Test
     @Issue("https://github.com/openrewrite/rewrite/issues/1168")
     fun exactMatch() = assertChanged(
-        recipe = ChangePropertyKey(
+        recipe = XChangePropertyKey(
             "acme.my-project.person.first-name",
             "acme.my-project.person.changed-first-name-key",
             false,
@@ -213,7 +213,7 @@ class XChangePropertyKeyTest : YamlRecipeTest {
     @Issue("https://github.com/openrewrite/rewrite/issues/1249")
     @Test
     fun updateKeyAndDoesNotMergeToSibling() = assertChanged(
-        recipe = ChangePropertyKey(
+        recipe = XChangePropertyKey(
             "i",
             "a.b.c",
             false,
